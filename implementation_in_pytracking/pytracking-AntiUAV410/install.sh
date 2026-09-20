@@ -136,7 +136,8 @@ python -m pip install \
     cython \
     pycocotools \
     lvis \
-    ninja 
+    ninja \
+    timm==0.6.13
 # ============================================================
 # 7. Install tracker-specific dependencies
 # ============================================================
