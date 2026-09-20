@@ -261,6 +261,14 @@ class TransformerEncoderLayer(nn.Module):
         q = q.to(dtype)
         k = k.to(dtype)
         src = src.to(dtype)
+        print("\n========== TRANSFORMER DTYPE DEBUG ==========")
+        print("q:", q.dtype, q.shape)
+        print("k:", k.dtype, k.shape)
+        print("src:", src.dtype, src.shape)
+        print("pos:", None if pos is None else (pos.dtype, pos.shape))
+        print("in_proj_weight:", self.self_attn.in_proj_weight.dtype)
+        print("in_proj_bias:", self.self_attn.in_proj_bias.dtype)
+        print("=============================================\n")
 
         src2 = self.self_attn(
             q, k, value=src, attn_mask=src_mask, key_padding_mask=src_key_padding_mask
@@ -444,4 +452,3 @@ def _get_activation_fn(activation):
     if activation == "glu":
         return F.glu
     raise RuntimeError(f"activation should be relu/gelu/glu, not {activation}.")
-
