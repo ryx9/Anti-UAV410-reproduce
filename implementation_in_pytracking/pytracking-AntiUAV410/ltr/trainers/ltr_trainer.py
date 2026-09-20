@@ -87,11 +87,6 @@ class LTRTrainer(BaseTrainer):
             # backward pass and update weights
             if loader.training:
                 self.optimizer.zero_grad()
-                print("\n========== LOSS DTYPE DEBUG ==========")
-                print("loss:", loss.dtype)
-                print("loss value:", loss.item())
-                print("======================================\n")
-
                 loss.backward()
                 if hasattr(self.settings, "grad_clip_max_norm"):
                     torch.nn.utils.clip_grad_norm_(
@@ -181,4 +176,3 @@ class LTRTrainer(BaseTrainer):
             )
 
         self.tensorboard_writer.write_epoch(self.stats, self.epoch)
-
