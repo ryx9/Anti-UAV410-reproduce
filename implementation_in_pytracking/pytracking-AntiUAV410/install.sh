@@ -41,8 +41,7 @@ else
 
 fi
 
-
-# ============================================================
+## ============================================================
 # 2. Initialize Conda
 # ============================================================
 
@@ -54,8 +53,15 @@ source "$CONDA_DIR/etc/profile.d/conda.sh"
 conda config --set always_yes yes
 conda config --set changeps1 no
 
+echo "Accepting Anaconda Terms of Service..."
 
-# ============================================================
+conda tos accept \
+    --override-channels \
+    --channel https://repo.anaconda.com/pkgs/main
+
+conda tos accept \
+    --override-channels \
+    --channel https://repo.anaconda.com/pkgs/r 
 # 3. Create Python 3.9.12 environment
 # ============================================================
 
