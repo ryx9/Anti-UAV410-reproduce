@@ -1,149 +1,249 @@
-#!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "ERROR! Illegal number of parameters. Usage: bash install.sh conda_install_path environment_name"
-    exit 0
+#!/bin/bash
+set -e
+
+# ============================================================
+# PyTracking - Kaggle setup
+# Python 3.9.12 + Conda
+# ============================================================
+
+ENV_NAME="pytracking"
+CONDA_DIR="/kaggle/working/miniconda3"
+
+echo "============================================================"
+echo " PyTracking Kaggle Installation"
+echo " Python 3.9.12 + Conda"
+echo "============================================================"
+
+
+# ============================================================
+# 1. Install Miniconda
+# ============================================================
+
+echo ""
+echo "[1/9] Installing Miniconda..."
+
+if [ ! -d "$CONDA_DIR" ]; then
+
+    wget -q \
+        https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O /kaggle/working/miniconda.sh
+
+    bash /kaggle/working/miniconda.sh \
+        -b \
+        -p "$CONDA_DIR"
+
+    rm /kaggle/working/miniconda.sh
+
+else
+
+    echo "Miniconda already exists."
+
 fi
 
-conda_install_path=$1
-conda_env_name=$2
 
-source $conda_install_path/etc/profile.d/conda.sh
-echo "****************** Creating conda environment ${conda_env_name} python=3.7 ******************"
-conda create -y --name $conda_env_name
+# ============================================================
+# 2. Initialize Conda
+# ============================================================
 
 echo ""
-echo ""
-echo "****************** Activating conda environment ${conda_env_name} ******************"
-conda activate $conda_env_name
+echo "[2/9] Initializing Conda..."
 
-echo ""
-echo ""
-echo "****************** Installing pytorch with cuda10 ******************"
-conda install -y pytorch torchvision cudatoolkit=10.0 -c pytorch
+source "$CONDA_DIR/etc/profile.d/conda.sh"
 
-echo ""
-echo ""
-echo "****************** Installing matplotlib ******************"
-conda install -y matplotlib
-
-echo ""
-echo ""
-echo "****************** Installing pandas ******************"
-conda install -y pandas
-
-echo ""
-echo ""
-echo "****************** Installing tqdm ******************"
-conda install -y tqdm
-
-echo ""
-echo ""
-echo "****************** Installing opencv ******************"
-pip install opencv-python
-
-echo ""
-echo ""
-echo "****************** Installing tensorboard ******************"
-pip install tb-nightly
-
-echo ""
-echo ""
-echo "****************** Installing visdom ******************"
-pip install visdom
-
-echo ""
-echo ""
-echo "****************** Installing scikit-image ******************"
-pip install scikit-image
-
-echo ""
-echo ""
-echo "****************** Installing tikzplotlib ******************"
-pip install tikzplotlib
-
-echo ""
-echo ""
-echo "****************** Installing gdown ******************"
-pip install gdown
-
-echo ""
-echo ""
-echo "****************** Installing cython ******************"
-conda install -y cython
-
-echo ""
-echo ""
-echo "****************** Installing coco toolkit ******************"
-pip install pycocotools
-
-echo ""
-echo ""
-echo "****************** Installing LVIS toolkit ******************"
-pip install lvis
+conda config --set always_yes yes
+conda config --set changeps1 no
 
 
+# ============================================================
+# 3. Create Python 3.9.12 environment
+# ============================================================
+
 echo ""
+echo "[3/9] Creating Conda environment..."
+
+if conda env list | grep -q "^${ENV_NAME} "; then
+
+    echo "Environment '$ENV_NAME' already exists."
+
+else
+
+    conda create \
+        -n "$ENV_NAME" \
+        python=3.9.12
+
+fi
+
+
+# ============================================================
+# 4. Activate environment
+# ============================================================
+
 echo ""
-echo "******** Installing spatial-correlation-sampler. Note: This is required only for KYS tracker **********"
+echo "[4/9] Activating environment..."
+
+conda activate "$ENV_NAME"
+
+echo ""
+echo "Python version:"
+python --version
+
+echo ""
+echo "Python location:"
+which python
+
+
+# ============================================================
+# 5. Install PyTorch
+# ============================================================
+
+echo ""
+echo "[5/9] Installing PyTorch..."
+
+# PyTorch 1.13.1 supports Python 3.9 and is much closer
+# to the era/API expected by older PyTracking code.
+#
+# CUDA 11.7 is used instead of the original CUDA 10.0.
+
+pip install \
+    torch==1.13.1 \
+    torchvision==0.14.1 \
+    --extra-index-url https://download.pytorch.org/whl/cu117
+
+
+# ============================================================
+# 6. Install Python dependencies
+# ============================================================
+
+echo ""
+echo "[6/9] Installing Python dependencies..."
+
+pip install \
+    matplotlib \
+    pandas \
+    tqdm \
+    opencv-python-headless \
+    tb-nightly \
+    visdom \
+    scikit-image \
+    tikzplotlib \
+    gdown \
+    cython \
+    pycocotools \
+    lvis \
+    ninja
+
+
+# ============================================================
+# 7. Install tracker-specific dependencies
+# ============================================================
+
+echo ""
+echo "[7/9] Installing tracker dependencies..."
+
 pip install spatial-correlation-sampler
 
-echo ""
-echo ""
-echo "****************** Installing jpeg4py python wrapper ******************"
-pip install jpeg4py 
 
 echo ""
-echo ""
-echo "****************** Installing ninja-build to compile PreROIPooling ******************"
-echo "************************* Need sudo privilege ******************"
-sudo apt-get install ninja-build
+echo "Installing jpeg4py..."
 
-echo ""
-echo ""
-echo "****************** Downloading networks ******************"
-mkdir pytracking/networks
-
-echo ""
-echo ""
-echo "****************** DiMP50 Network ******************"
-gdown https://drive.google.com/uc\?id\=1qgachgqks2UGjKx-GdO1qylBDdB1f9KN -O pytracking/networks/dimp50.pth
-# gdown https://drive.google.com/uc\?id\=1MAjrRJDCbL0DSjUKFyDkUuYS1-cYBNjk -O pytracking/networks/dimp18.pth
-
-# echo ""
-# echo ""
-# echo "****************** ATOM Network ******************"
-# gdown https://drive.google.com/uc\?id\=1VNyr-Ds0khjM0zaq6lU-xfY74-iWxBvU -O pytracking/networks/atom_default.pth
-
-# echo ""
-# echo ""
-# echo "****************** ECO Network ******************"
-# gdown https://drive.google.com/uc\?id\=1aWC4waLv_te-BULoy0k-n_zS-ONms21S -O pytracking/networks/resnet18_vggmconv1.pth
-
-echo ""
-echo ""
-echo "****************** Setting up environment ******************"
-python -c "from pytracking.evaluation.environment import create_default_local_file; create_default_local_file()"
-python -c "from ltr.admin.environment import create_default_local_file; create_default_local_file()"
+pip install jpeg4py || \
+    echo "WARNING: jpeg4py installation failed. Continuing."
 
 
-echo ""
-echo ""
-echo "****************** Installing jpeg4py ******************"
-while true; do
-    read -p "Install jpeg4py for reading images? This step required sudo privilege. Installing jpeg4py is optional, however recommended. [y,n]  " install_flag
-    case $install_flag in
-        [Yy]* ) sudo apt-get install libturbojpeg; break;;
-        [Nn]* ) echo "Skipping jpeg4py installation!"; break;;
-        * ) echo "Please answer y or n  ";;
-    esac
-done
+# ============================================================
+# 8. Download DiMP50 network
+# ============================================================
 
 echo ""
-echo ""
-echo "****************** Installation complete! ******************"
+echo "[8/9] Downloading DiMP50 network..."
+
+mkdir -p pytracking/networks
+
+if [ ! -f "pytracking/networks/dimp50.pth" ]; then
+
+    gdown \
+        "https://drive.google.com/uc?id=1qgachgqks2UGjKx-GdO1qylBDdB1f9KN" \
+        -O pytracking/networks/dimp50.pth
+
+else
+
+    echo "dimp50.pth already exists. Skipping."
+
+fi
+
+
+# ============================================================
+# 9. Create PyTracking/LTR environment files
+# ============================================================
 
 echo ""
+echo "[9/9] Creating PyTracking environment files..."
+
+
+# ============================================================
+# Verification
+# ============================================================
+
 echo ""
-echo "****************** More networks can be downloaded from the google drive folder https://drive.google.com/drive/folders/1WVhJqvdu-_JG1U-V0IqfxTUa1SBPnL0O ******************"
-echo "****************** Or, visit the model zoo at https://github.com/visionml/pytracking/blob/master/MODEL_ZOO.md ******************"
+echo "============================================================"
+echo " VERIFICATION"
+echo "============================================================"
+
+echo ""
+echo "Python:"
+python --version
+
+echo ""
+echo "Python executable:"
+which python
+
+echo ""
+echo "PyTorch:"
+python - <<'PY'
+
+import torch
+
+print("PyTorch version :", torch.__version__)
+print("CUDA available  :", torch.cuda.is_available())
+print("CUDA version    :", torch.version.cuda)
+
+if torch.cuda.is_available():
+    print("GPU             :", torch.cuda.get_device_name(0))
+    print("GPU count       :", torch.cuda.device_count())
+
+PY
+
+
+echo ""
+echo "DiMP50:"
+
+if [ -f "pytracking/networks/dimp50.pth" ]; then
+    ls -lh pytracking/networks/dimp50.pth
+    echo "OK"
+else
+    echo "WARNING: dimp50.pth not found"
+fi
+
+
+echo ""
+echo "============================================================"
+echo " INSTALLATION COMPLETE"
+echo "============================================================"
+
+echo ""
+echo "Environment:"
+echo "    $ENV_NAME"
+
+echo ""
+echo "Python:"
+python --version
+
+echo ""
+echo "IMPORTANT:"
+echo "The Conda environment is active only inside this script."
+echo "For a Kaggle notebook cell, run:"
+echo ""
+echo "source $CONDA_DIR/etc/profile.d/conda.sh"
+echo "conda activate $ENV_NAME"
+echo ""
