@@ -124,8 +124,9 @@ pip install \
 echo ""
 echo "[6/9] Installing Python dependencies..."
 
-pip install \
-    matplotlib \
+python -m pip install \
+    numpy==1.23.5 \
+    matplotlib==3.7.5 \
     pandas \
     tqdm \
     opencv-python-headless \
@@ -136,8 +137,6 @@ pip install \
     pycocotools \
     lvis \
     ninja
-
-
 # ============================================================
 # 7. Install tracker-specific dependencies
 # ============================================================
