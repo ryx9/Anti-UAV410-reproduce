@@ -15,7 +15,15 @@ def freeze_batchnorm_layers(net):
 
 
 class LTRTrainer(BaseTrainer):
-    def __init__(self, actor, loaders, optimizer, settings, lr_scheduler=None, freeze_backbone_bn_layers=False):
+    def __init__(
+        self,
+        actor,
+        loaders,
+        optimizer,
+        settings,
+        lr_scheduler=None,
+        freeze_backbone_bn_layers=False,
+    ):
         """
         args:
             actor - The actor for training the network
@@ -34,18 +42,20 @@ class LTRTrainer(BaseTrainer):
         self.stats = OrderedDict({loader.name: None for loader in self.loaders})
 
         # Initialize tensorboard
-        tensorboard_writer_dir = os.path.join(self.settings.env.tensorboard_dir, self.settings.project_path)
-        self.tensorboard_writer = TensorboardWriter(tensorboard_writer_dir, [l.name for l in loaders])
+        tensorboard_writer_dir = os.path.join(
+            self.settings.env.tensorboard_dir, self.settings.project_path
+        )
+        self.tensorboard_writer = TensorboardWriter(
+            tensorboard_writer_dir, [l.name for l in loaders]
+        )
 
-        self.move_data_to_gpu = getattr(settings, 'move_data_to_gpu', True)
+        self.move_data_to_gpu = getattr(settings, "move_data_to_gpu", True)
 
         self.freeze_backbone_bn_layers = freeze_backbone_bn_layers
 
     def _set_default_settings(self):
         # Dict of all default values
-        default = {'print_interval': 10,
-                   'print_stats': None,
-                   'description': ''}
+        default = {"print_interval": 10, "print_stats": None, "description": ""}
 
         for param, default_value in default.items():
             if getattr(self.settings, param, None) is None:
@@ -68,8 +78,8 @@ class LTRTrainer(BaseTrainer):
             if self.move_data_to_gpu:
                 data = data.to(self.device)
 
-            data['epoch'] = self.epoch
-            data['settings'] = self.settings
+            data["epoch"] = self.epoch
+            data["settings"] = self.settings
 
             # forward pass
             loss, stats = self.actor(data)
@@ -77,10 +87,16 @@ class LTRTrainer(BaseTrainer):
             # backward pass and update weights
             if loader.training:
                 self.optimizer.zero_grad()
-                loss.backward()
+                print("\n========== LOSS DTYPE DEBUG ==========")
+                print("loss:", loss.dtype)
+                print("loss value:", loss.item())
+                print("======================================\n")
 
-                if hasattr(self.settings, 'grad_clip_max_norm'):
-                    torch.nn.utils.clip_grad_norm_(self.actor.net.parameters(), self.settings.grad_clip_max_norm)
+                loss.backward()
+                if hasattr(self.settings, "grad_clip_max_norm"):
+                    torch.nn.utils.clip_grad_norm_(
+                        self.actor.net.parameters(), self.settings.grad_clip_max_norm
+                    )
 
                 self.optimizer.step()
 
@@ -107,7 +123,9 @@ class LTRTrainer(BaseTrainer):
     def _update_stats(self, new_stats: OrderedDict, batch_size, loader):
         # Initialize stats if not initialized yet
         if loader.name not in self.stats.keys() or self.stats[loader.name] is None:
-            self.stats[loader.name] = OrderedDict({name: AverageMeter() for name in new_stats.keys()})
+            self.stats[loader.name] = OrderedDict(
+                {name: AverageMeter() for name in new_stats.keys()}
+            )
 
         for name, val in new_stats.items():
             if name not in self.stats[loader.name].keys():
@@ -121,11 +139,19 @@ class LTRTrainer(BaseTrainer):
         average_fps = self.num_frames / (current_time - self.start_time)
         self.prev_time = current_time
         if i % self.settings.print_interval == 0 or i == loader.__len__():
-            print_str = '[%s: %d, %d / %d] ' % (loader.name, self.epoch, i, loader.__len__())
-            print_str += 'FPS: %.1f (%.1f)  ,  ' % (average_fps, batch_fps)
+            print_str = "[%s: %d, %d / %d] " % (
+                loader.name,
+                self.epoch,
+                i,
+                loader.__len__(),
+            )
+            print_str += "FPS: %.1f (%.1f)  ,  " % (average_fps, batch_fps)
             for name, val in self.stats[loader.name].items():
-                if (self.settings.print_stats is None or name in self.settings.print_stats) and hasattr(val, 'avg'):
-                    print_str += '%s: %.5f  ,  ' % (name, val.avg)
+                if (
+                    self.settings.print_stats is None
+                    or name in self.settings.print_stats
+                ) and hasattr(val, "avg"):
+                    print_str += "%s: %.5f  ,  " % (name, val.avg)
             print(print_str[:-5])
 
     def _stats_new_epoch(self):
@@ -134,7 +160,7 @@ class LTRTrainer(BaseTrainer):
             if loader.training:
                 lr_list = self.lr_scheduler.get_lr()
                 for i, lr in enumerate(lr_list):
-                    var_name = 'LearningRate/group{}'.format(i)
+                    var_name = "LearningRate/group{}".format(i)
                     if var_name not in self.stats[loader.name].keys():
                         self.stats[loader.name][var_name] = StatValue()
                     self.stats[loader.name][var_name].update(lr)
@@ -143,11 +169,16 @@ class LTRTrainer(BaseTrainer):
             if loader_stats is None:
                 continue
             for stat_value in loader_stats.values():
-                if hasattr(stat_value, 'new_epoch'):
+                if hasattr(stat_value, "new_epoch"):
                     stat_value.new_epoch()
 
     def _write_tensorboard(self):
         if self.epoch == 1:
-            self.tensorboard_writer.write_info(self.settings.module_name, self.settings.script_name, self.settings.description)
+            self.tensorboard_writer.write_info(
+                self.settings.module_name,
+                self.settings.script_name,
+                self.settings.description,
+            )
 
         self.tensorboard_writer.write_epoch(self.stats, self.epoch)
+
