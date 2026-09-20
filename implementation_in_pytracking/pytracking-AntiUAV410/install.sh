@@ -130,10 +130,8 @@ pip install \
     tqdm \
     opencv-python-headless \
     tb-nightly \
-    visdom \
     scikit-image \
     tikzplotlib \
-    gdown \
     cython \
     pycocotools \
     lvis \
@@ -155,29 +153,6 @@ echo "Installing jpeg4py..."
 
 pip install jpeg4py || \
     echo "WARNING: jpeg4py installation failed. Continuing."
-
-
-# ============================================================
-# 8. Download DiMP50 network
-# ============================================================
-
-echo ""
-echo "[8/9] Downloading DiMP50 network..."
-
-mkdir -p pytracking/networks
-
-if [ ! -f "pytracking/networks/dimp50.pth" ]; then
-
-    gdown \
-        "https://drive.google.com/uc?id=1qgachgqks2UGjKx-GdO1qylBDdB1f9KN" \
-        -O pytracking/networks/dimp50.pth
-
-else
-
-    echo "dimp50.pth already exists. Skipping."
-
-fi
-
 
 # ============================================================
 # 9. Create PyTracking/LTR environment files
