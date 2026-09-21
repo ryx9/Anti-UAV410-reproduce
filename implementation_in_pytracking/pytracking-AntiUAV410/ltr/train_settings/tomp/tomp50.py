@@ -41,7 +41,7 @@ def run(settings):
     settings.train_samples_per_epoch = 40000
     settings.val_samples_per_epoch = 10000
     settings.val_epoch_interval = 5
-    settings.num_epochs = 5
+    settings.num_epochs = 10
 
     settings.weight_giou = 1.0
     settings.weight_clf = 100.0
