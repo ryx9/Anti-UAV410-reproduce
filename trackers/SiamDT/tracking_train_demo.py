@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--work_dir", default="work_dirs/siamdt_swin_tiny_sgd")
     parser.add_argument(
         "--load_from",
-        default="/kaggle/input/models/rizwanabdullah05/siamdt-models/pytorch/default/1/siamdt_swin_tiny_sgd.pth/cascade_mask_rcnn_swin_tiny_patch4_window7.pth",
+        default="/kaggle/working/SIAMTDT/Anti-UAV410/trackers/SiamDT/pretrained_weights/cascade_mask_rcnn_swin_tiny_patch4_window7.pth",
     )
     parser.add_argument("--resume_from")
     # default='work_dirs/XXXX/latest.pth')
