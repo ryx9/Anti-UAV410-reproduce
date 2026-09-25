@@ -24,92 +24,97 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # conda activate SiamDT
 # python tracking_train_demo.py
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Train a similarity learning detector')
+    parser = argparse.ArgumentParser(description="Train a similarity learning detector")
+    parser.add_argument("--config", default="configs/siamdt_swin_tiny_sgd.py")
+    parser.add_argument("--work_dir", default="work_dirs/siamdt_swin_tiny_sgd")
     parser.add_argument(
-        '--config',
-        default='configs/siamdt_swin_tiny_sgd.py')
+        "--load_from", default="pretrained_weights/cascade_mask_rcnn_swin_tiny.pth.tar"
+    )
+    parser.add_argument("--resume_from")
+    # default='work_dirs/XXXX/latest.pth')
     parser.add_argument(
-        '--work_dir',
-        default='work_dirs/siamdt_swin_tiny_sgd')
-    parser.add_argument('--load_from',
-        default='pretrained_weights/cascade_mask_rcnn_swin_tiny.pth.tar')
-    parser.add_argument('--resume_from')
-        # default='work_dirs/XXXX/latest.pth')
-    parser.add_argument(
-        '--base_dataset',  # names of training datasets, splitted by comma, see `datasets/wrappers` for options
+        "--base_dataset",  # names of training datasets, splitted by comma, see `datasets/wrappers` for options
         type=str,
-        default='uavtir_train'  # uavtir_train / got10k_train / lasot_train
+        default="uavtir_train",  # uavtir_train / got10k_train / lasot_train
     )
     parser.add_argument(
-        '--base_transforms',  # names of transforms, see `datasets/wrappers` for options
+        "--base_transforms",  # names of transforms, see `datasets/wrappers` for options
         type=str,
-        default='extra_partial')   # extra_partial
+        default="extra_partial",
+    )  # extra_partial
     parser.add_argument(
-        '--sampling_prob',  # probabilities for sampling training datasets, splitted by comma, sum should be 1
+        "--sampling_prob",  # probabilities for sampling training datasets, splitted by comma, sum should be 1
         type=str,
-        default='1.0'
+        default="1.0",
     )
 
-    parser.add_argument('--fp16', action='store_true')
-    parser.add_argument('--workers', type=int)
-    parser.add_argument('--validate',
-        action='store_true',
-        help='whether not to evaluate the checkpoint during training')
+    parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--workers", type=int)
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="whether not to evaluate the checkpoint during training",
+    )
 
     group_gpus = parser.add_mutually_exclusive_group()
     group_gpus.add_argument(
-        '--gpus',
+        "--gpus",
         type=int,
         default=1,
-        help='number of gpus to use '
-        '(only applicable to non-distributed training)')
+        help="number of gpus to use (only applicable to non-distributed training)",
+    )
     group_gpus.add_argument(
-        '--gpu-ids',
+        "--gpu-ids",
         type=int,
-        nargs='+',
-        help='ids of gpus to use '
-        '(only applicable to non-distributed training)')
-    parser.add_argument('--seed', type=int, default=None, help='random seed')
+        nargs="+",
+        help="ids of gpus to use (only applicable to non-distributed training)",
+    )
+    parser.add_argument("--seed", type=int, default=None, help="random seed")
     parser.add_argument(
-        '--deterministic',
-        action='store_true',
-        help='whether to set deterministic options for CUDNN backend.')
+        "--deterministic",
+        action="store_true",
+        help="whether to set deterministic options for CUDNN backend.",
+    )
     parser.add_argument(
-        '--options',
-        nargs='+',
+        "--options",
+        nargs="+",
         action=DictAction,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file (deprecate), '
-        'change to --cfg-options instead.')
+        help="override some settings in the used config, the key-value pair "
+        "in xxx=yyy format will be merged into config file (deprecate), "
+        "change to --cfg-options instead.",
+    )
     parser.add_argument(
-        '--cfg-options',
-        nargs='+',
+        "--cfg-options",
+        nargs="+",
         action=DictAction,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
+        help="override some settings in the used config, the key-value pair "
+        "in xxx=yyy format will be merged into config file. If the value to "
         'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
         'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+        "Note that the quotation marks are necessary and that no white space "
+        "is allowed.",
+    )
     parser.add_argument(
-        '--launcher',
-        choices=['none', 'pytorch', 'slurm', 'mpi'],
-        default='none',
-        help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+        "--launcher",
+        choices=["none", "pytorch", "slurm", "mpi"],
+        default="none",
+        help="job launcher",
+    )
+    parser.add_argument("--local_rank", type=int, default=0)
     args = parser.parse_args()
 
-    if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = str(args.local_rank)
+    if "LOCAL_RANK" not in os.environ:
+        os.environ["LOCAL_RANK"] = str(args.local_rank)
 
     if args.options and args.cfg_options:
         raise ValueError(
-            '--options and --cfg-options cannot be both '
-            'specified, --options is deprecated in favor of --cfg-options')
+            "--options and --cfg-options cannot be both "
+            "specified, --options is deprecated in favor of --cfg-options"
+        )
     if args.options:
-        warnings.warn('--options is deprecated in favor of --cfg-options')
+        warnings.warn("--options is deprecated in favor of --cfg-options")
         args.cfg_options = args.options
 
     return args
@@ -126,31 +131,33 @@ def main():
     if args.base_transforms is not None:
         cfg.data.train.base_transforms = args.base_transforms
     if args.sampling_prob is not None:
-        probs = [float(p) for p in args.sampling_prob.split(',')]
+        probs = [float(p) for p in args.sampling_prob.split(",")]
         cfg.data.train.sampling_prob = probs
     if args.fp16:
-        cfg.fp16 = {'loss_scale': 512.}
+        cfg.fp16 = {"loss_scale": 512.0}
     if args.workers is not None:
         cfg.data.workers_per_gpu = args.workers
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
     # import modules from string list.
-    if cfg.get('custom_imports', None):
+    if cfg.get("custom_imports", None):
         from mmcv.utils import import_modules_from_strings
-        import_modules_from_strings(**cfg['custom_imports'])
+
+        import_modules_from_strings(**cfg["custom_imports"])
     # set cudnn_benchmark
-    if cfg.get('cudnn_benchmark', False):
+    if cfg.get("cudnn_benchmark", False):
         torch.backends.cudnn.benchmark = True
 
     # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
         # update configs according to CLI args if args.work_dir is not None
         cfg.work_dir = args.work_dir
-    elif cfg.get('work_dir', None) is None:
+    elif cfg.get("work_dir", None) is None:
         # use config filename as default work_dir if cfg.work_dir is None
-        cfg.work_dir = osp.join('./work_dirs',
-                                osp.splitext(osp.basename(args.config))[0])
+        cfg.work_dir = osp.join(
+            "./work_dirs", osp.splitext(osp.basename(args.config))[0]
+        )
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
     if args.gpu_ids is not None:
@@ -159,7 +166,7 @@ def main():
         cfg.gpu_ids = range(1) if args.gpus is None else range(args.gpus)
 
     # init distributed env first, since logger depends on the dist info.
-    if args.launcher == 'none':
+    if args.launcher == "none":
         distributed = False
     else:
         distributed = True
@@ -173,8 +180,8 @@ def main():
     # dump config
     cfg.dump(osp.join(cfg.work_dir, osp.basename(args.config)))
     # init the logger before other steps
-    timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(cfg.work_dir, f'{timestamp}.log')
+    timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    log_file = osp.join(cfg.work_dir, f"{timestamp}.log")
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
 
     # init the meta dict to record some important information such as
@@ -182,30 +189,29 @@ def main():
     meta = dict()
     # log env info
     env_info_dict = collect_env()
-    env_info = '\n'.join([(f'{k}: {v}') for k, v in env_info_dict.items()])
-    dash_line = '-' * 60 + '\n'
-    logger.info('Environment info:\n' + dash_line + env_info + '\n' +
-                dash_line)
-    meta['env_info'] = env_info
-    meta['config'] = cfg.pretty_text
+    env_info = "\n".join([(f"{k}: {v}") for k, v in env_info_dict.items()])
+    dash_line = "-" * 60 + "\n"
+    logger.info("Environment info:\n" + dash_line + env_info + "\n" + dash_line)
+    meta["env_info"] = env_info
+    meta["config"] = cfg.pretty_text
     # log some basic info
-    logger.info(f'Distributed training: {distributed}')
-    logger.info(f'Config:\n{cfg.pretty_text}')
+    logger.info(f"Distributed training: {distributed}")
+    logger.info(f"Config:\n{cfg.pretty_text}")
 
     # set random seeds
     if args.seed is not None:
-        logger.info(f'Set random seed to {args.seed}, '
-                    f'deterministic: {args.deterministic}')
+        logger.info(
+            f"Set random seed to {args.seed}, deterministic: {args.deterministic}"
+        )
         set_random_seed(args.seed, deterministic=args.deterministic)
     cfg.seed = args.seed
-    meta['seed'] = args.seed
-    meta['exp_name'] = osp.basename(args.config)
+    meta["seed"] = args.seed
+    meta["exp_name"] = osp.basename(args.config)
 
     # build model
     model = build_detector(
-        cfg.model,
-        train_cfg=cfg.get('train_cfg'),
-        test_cfg=cfg.get('test_cfg'))
+        cfg.model, train_cfg=cfg.get("train_cfg"), test_cfg=cfg.get("test_cfg")
+    )
 
     # build dataset
     datasets = [build_dataset(cfg.data.train)]
@@ -217,8 +223,8 @@ def main():
         # save mmdet version, config file content and class names in
         # checkpoints as meta data
         cfg.checkpoint_config.meta = dict(
-            mmdet_version=__version__ + get_git_hash()[:7],
-            CLASSES=datasets[0].CLASSES)
+            mmdet_version=__version__ + get_git_hash()[:7], CLASSES=datasets[0].CLASSES
+        )
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
 
@@ -230,8 +236,9 @@ def main():
         distributed=distributed,
         validate=args.validate,
         timestamp=timestamp,
-        meta=meta)
+        meta=meta,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

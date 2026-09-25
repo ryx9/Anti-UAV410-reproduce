@@ -1,11 +1,10 @@
 import torch
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    old_ckp_file = "/kaggle/input/models/rizwanabdullah05/siamdt-models/pytorch/default/1/cascade_mask_rcnn_swin_tiny_patch4_window7.pth"
 
-    old_ckp_file = 'libs/swintransformer/checkpoints/cascade_mask_rcnn_swin_tiny_patch4_window7.pth'
-
-    old_state_dict = torch.load(old_ckp_file)['state_dict']
+    old_state_dict = torch.load(old_ckp_file)["state_dict"]
 
     from collections import OrderedDict
 
@@ -13,16 +12,15 @@ if __name__ == '__main__':
 
     # 只保留backbone和neck的值
     for key, value in old_state_dict.items():
-
         print(key)
-        if key[0:8] == 'backbone':
+        if key[0:8] == "backbone":
             new_state_dict[key] = value
-        if key[0:4] == 'neck':
+        if key[0:4] == "neck":
             new_state_dict[key] = value
-
 
     # open in torch 1.4.0
-    torch.save(new_state_dict,
-               'pretrained_weights/cascade_mask_rcnn_swin_tiny.pth.tar',
-               _use_new_zipfile_serialization=False)
-
+    torch.save(
+        new_state_dict,
+        "pretrained_weights/cascade_mask_rcnn_swin_tiny.pth.tar",
+        _use_new_zipfile_serialization=False,
+    )
