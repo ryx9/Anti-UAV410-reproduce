@@ -1,27 +1,29 @@
-import init_paths
 import libs.data as data
 from trackers import *
-
-# conda activate SiamDT
-# python -m visdom.server -port=5123
-# python tracking_test_demo.py
 
 if __name__ == "__main__":
     cfg_file = "configs/siamdt_swin_tiny_sgd.py"
     name_suffix = cfg_file[8:-3]
-    ckp_file = "/kaggle/input/models/rizwanabdullah05/siamdt-models/pytorch/default/1/siamdt_swin_tiny_sgd.pth"
+
+    # Checkpoint produced by your training run
+    ckp_file = "work_dirs/siamdt_swin_tiny_sgd/latest.pth"
+
     visualize = False
-    # selected_seq='02_6321_0274-2773'
     selected_seq = "ALL"
 
     transforms = data.BasicPairTransforms(train=False)
+
     tracker = SiamDTTracker(
-        cfg_file, ckp_file, transforms, name_suffix=name_suffix, visualize=visualize
+        cfg_file,
+        ckp_file,
+        transforms,
+        name_suffix=name_suffix,
+        visualize=visualize,
     )
 
     evaluators = [
         data.EvaluatorUAVtir(
-            root_dir="/media/data2/TrackingDatasets/Anti-UAV410/Anti-UAV/",
+            root_dir="/kaggle/input/datasets/uppalajathin/anti-uav-410-sample/",
             subset="test",
         )
     ]
